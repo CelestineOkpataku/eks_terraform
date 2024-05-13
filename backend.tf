@@ -6,7 +6,3 @@ terraform {
     dynamodb_table = "dynamodb-state-locking"
   }
 }
-
-provider "aws" {
-  region = "us-west-2"
-}
