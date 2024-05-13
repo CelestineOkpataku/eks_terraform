@@ -1,4 +1,4 @@
-variable "exception_cidr_block" {
+/*variable "exception_cidr_block" {
   description = "CIDR block exception for inbound access to the EKS cluster"
   default     = "196.182.32.48/32"
 }
@@ -33,3 +33,4 @@ variable "default_security_group_tags" {
   type        = map(string)
   default     = {}
 }
+*/
