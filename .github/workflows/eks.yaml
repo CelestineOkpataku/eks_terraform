@@ -1,4 +1,4 @@
-name: Terraform EKS Setup
+name: "Terraform EKS Setup"
 
 on:
   push:
@@ -10,8 +10,16 @@ jobs:
     name: Setup EKS Cluster
     runs-on: ubuntu-latest
 
+    env:
+      AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
+      AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+
+    strategy:
+      matrix:
+        folder: ['eks_cluster', 'addons']
+
     steps:
-    - name: Checkout code
+    - name: Checkout
       uses: actions/checkout@v2
 
     - name: Setup Terraform
@@ -20,29 +28,23 @@ jobs:
         terraform_version: 1.0.0
 
     - name: Terraform Init
-      run: terraform init eks_cluster
+      run: terraform -chdir=${{matrix.folder}} init
+
+    - name: Terraform Plan
+      id: plan
+      if: github.event_name == 'push'
+      run: terraform -chdir=${{ matrix.folder }} plan -no-color
+      continue-on-error: true
+
+    - name: Terraform Plan Status
+      if: steps.plan.outcome == 'failure'
+      run: exit 1
 
     - name: Terraform Apply
-      run: terraform apply -auto-approve eks_cluster
+      id: apply
+      if: github.ref == 'refs/heads/master' && github.event_name == 'push'
+      run: terraform -chdir=${{ matrix.folder }} apply -auto-approve
 
-  install-addons:
-    name: Install EKS Addons
-    runs-on: ubuntu-latest
-
-    steps:
-    - name: Checkout code
-      uses: actions/checkout@v2
-
-    - name: Setup Terraform
-      uses: hashicorp/setup-terraform@v1
-      with:
-        terraform_version: 1.0.0
-
-    - name: Terraform Init
-      run: terraform init addons
-
-    - name: Terraform Apply
-      run: terraform apply -auto-approve addons
 
   install-tools:
     name: Install Kyverno and Velero
@@ -60,14 +62,7 @@ jobs:
     - name: Install Kyverno
       run: sh script/kyverno.sh
 
-    - name: Handle Plan Errors
 
-      if: ${{ failure() }}
-      run: exit 1 # Fail the workflow if there are planning errors
-
-    - name: Terraform Apply
-      run: |
-        terraform apply -auto-approve tfplan
       env:
         AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
         AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
