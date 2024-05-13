@@ -1,0 +1,74 @@
+name: Terraform EKS Setup
+
+on:
+  push:
+    branches:
+    - main
+
+jobs:
+  setup-eks-cluster:
+    name: Setup EKS Cluster
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v2
+
+    - name: Setup Terraform
+      uses: hashicorp/setup-terraform@v1
+      with:
+        terraform_version: 1.0.0
+
+    - name: Terraform Init
+      run: terraform init eks_cluster
+
+    - name: Terraform Apply
+      run: terraform apply -auto-approve eks_cluster
+
+  install-addons:
+    name: Install EKS Addons
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v2
+
+    - name: Setup Terraform
+      uses: hashicorp/setup-terraform@v1
+      with:
+        terraform_version: 1.0.0
+
+    - name: Terraform Init
+      run: terraform init addons
+
+    - name: Terraform Apply
+      run: terraform apply -auto-approve addons
+
+  install-tools:
+    name: Install Kyverno and Velero
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v2
+
+    - name: Install kubectl
+      uses: azure/setup-kubectl@v1
+      with:
+        version: 'latest'
+
+    - name: Install Kyverno
+      run: sh script/kyverno.sh
+
+    - name: Handle Plan Errors
+
+      if: ${{ failure() }}
+      run: exit 1 # Fail the workflow if there are planning errors
+
+    - name: Terraform Apply
+      run: |
+        terraform apply -auto-approve tfplan
+      env:
+        AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
+        AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+      continue-on-error: true # Continue even if there are apply errors
