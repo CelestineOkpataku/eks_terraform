@@ -6,7 +6,7 @@ on:
     - main # Change this to your main branch name if different
 
 jobs:
-  terraform_apply:
+  terraform_apply_eks:
     name: Terraform Apply
     runs-on: ubuntu-latest
 
