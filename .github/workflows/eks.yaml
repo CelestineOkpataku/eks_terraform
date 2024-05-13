@@ -10,31 +10,27 @@ jobs:
     name: Terraform Apply
     runs-on: ubuntu-latest
 
-    env:
-      AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
-      AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
-      AWS_DEFAULT_REGION: us-west-2
     steps:
     - name: Checkout repository
       uses: actions/checkout@v2
 
-    - name: Initialize and apply Terraform for eks_cluster
-      run: |
-        cd eks_cluster
-        terraform init
-        terraform apply --auto-approve
-      working-directory: eks_cluster
+    - name: List directory contents
+      run: ls -la
 
-    - name: Initialize and apply Terraform for addons
-      run: |
-        cd addons
-        terraform init
-        terraform apply --auto-approve
-      working-directory: addons
+    - name: Change to eks_cluster directory
+      run: cd eks_cluster || exit 1
 
-    - name: Initialize and apply Terraform for scripts
+    - name: Print current directory
+      run: pwd
+
+    - name: Initialize and apply Terraform
       run: |
-        cd scripts
         terraform init
         terraform apply --auto-approve
-      working-directory: scripts
+
+
+    env:
+      AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
+      AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+      AWS_DEFAULT_REGION: us-west-2
+
